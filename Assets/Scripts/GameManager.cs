@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,16 +13,13 @@ public class GameManager : MonoBehaviour
     private List<GameObject> spawnedButtons =
         new List<GameObject>();
 
-    private int[][] levels =
-    {
-        new int[] { 2, 7 },
-        new int[] { 5, 1, 9 },
-        new int[] { 4, 12, 8, 3 },
-        new int[] { 11, 6, 15, 2, 9 },
-        new int[] { 10, 1, 4, 6, 9 },
-        new int[] { 9, 3, 4, 1, 8 },
-        new int[] { 53, 52, 54, 51, 50 }
-    };
+    public List<LevelsScript> levels = new List<LevelsScript>();
+
+    public TMP_Text score;
+    public int points = 0;
+
+    public TMP_Text time;
+    public float counter = 15f;
 
     private Vector2[][] levelPositions =
     {
@@ -53,56 +51,40 @@ public class GameManager : MonoBehaviour
             new Vector2(-300, 100),
             new Vector2(200, 200),
             new Vector2(-200, 200)
-        },
-        new Vector2[]
-        {
-            new Vector2(300, 100),
-            new Vector2(0, 200),
-            new Vector2(-300, 100),
-            new Vector2(200, 200),
-            new Vector2(-200, 200)
-        },
-        
-        new Vector2[]
-        {
-            new Vector2(300, 100),
-            new Vector2(0, 200),
-            new Vector2(-300, 100),
-            new Vector2(200, 200),
-            new Vector2(-200, 200)
-        },
-
-        new Vector2[]
-        {
-            new Vector2(300, 100),
-            new Vector2(0, 200),
-            new Vector2(-300, 100),
-            new Vector2(200, 200),
-            new Vector2(-200, 200)
         }
     };
 
-    private int maxNumber;
+    private string maxNumber;
 
     private void Start()
     {
+        ShuffleLevels(levels);
         LoadLevel();
+    }
+
+    void Update()
+    {
+        counter = counter - Time.deltaTime;
+        time.text = $"Время: {counter}";
+        if (counter <= 0){
+            UnityEditor.EditorApplication.isPlaying = false;
+        }
     }
 
     void LoadLevel()
     {
         ClearButtons();
 
-        int[] numbers = levels[currentLevel];
+        List<string> numbers = levels[currentLevel].answers;
 
         Vector2[] positions =
-            levelPositions[currentLevel];
+            levelPositions[numbers.Count - 2];
 
-        maxNumber = numbers.Max();
+        maxNumber = numbers[levels[currentLevel].rightIndex];
 
         // Перемешиваем числа
-        List<int> shuffledNumbers =
-            new List<int>(numbers);
+        List<string> shuffledNumbers =
+            new List<string>(numbers);
 
         Shuffle(shuffledNumbers);
 
@@ -127,15 +109,19 @@ public class GameManager : MonoBehaviour
         Debug.Log("Уровень " + (currentLevel + 1));
     }
 
-    public void ReceiveNumber(int number)
+    public void ReceiveNumber(string number)
     {
         if (number == maxNumber)
         {
             Debug.Log("Правильно!");
 
+            points = points + 1;
+
+            score.text = $"Счёт: {points}";
+
             currentLevel++;
 
-            if (currentLevel >= levels.Length)
+            if (currentLevel >= levels.Count)
             {
                 Debug.Log("Игра пройдена!");
                 return;
@@ -145,6 +131,12 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            if (points > 0)
+            {
+                points = points - 1;
+            }
+
+            score.text = $"Счёт: {points}";
             Debug.Log("Неправильно!");
         }
     }
@@ -159,14 +151,27 @@ public class GameManager : MonoBehaviour
         spawnedButtons.Clear();
     }
 
-    void Shuffle(List<int> list)
+    void Shuffle(List<string> list)
     {
         for (int i = 0; i < list.Count; i++)
         {
             int randomIndex =
                 Random.Range(i, list.Count);
 
-            int temp = list[i];
+            string temp = list[i];
+            list[i] = list[randomIndex];
+            list[randomIndex] = temp;
+        }
+    }
+
+    void ShuffleLevels(List<LevelsScript> list)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            int randomIndex =
+                Random.Range(i, list.Count);
+
+            LevelsScript temp = list[i];
             list[i] = list[randomIndex];
             list[randomIndex] = temp;
         }

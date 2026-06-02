@@ -4,12 +4,12 @@ using TMPro;
 
 public class NumberButton : MonoBehaviour
 {
-    public int number;
+    public string number;
 
     private Button button;
     private GameManager gameManager;
 
-    public void Init(int value, GameManager manager)
+    public void Init(string value, GameManager manager)
     {
         number = value;
         gameManager = manager;
