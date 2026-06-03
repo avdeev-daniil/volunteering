@@ -9,9 +9,12 @@ public class GameManager : MonoBehaviour
     public Transform buttonParent;
     public List<GameObject> backgrounds = new List<GameObject>();
     private int currentLevel = 0;
-    private int firstClick = 0;
+    private int firstClick = -1;
     private List<GameObject> svetoforishe = new List<GameObject>();
     private float timer_1 = 0;
+    public GameObject firstScreen;
+    public TMP_Text firstText;
+    public TMP_Text firstText2;
 
     private List<GameObject> spawnedButtons =
         new List<GameObject>();
@@ -29,32 +32,32 @@ public class GameManager : MonoBehaviour
     {
         new Vector2[]
         {
-            new Vector2(-311, 76),
-            new Vector2(314, 76)
+            new Vector2(-184, 76),
+            new Vector2(185, 76)
         },
 
         new Vector2[]
         {
-            new Vector2(357, 106),
-            new Vector2(-345, 106),
-            new Vector2(0, 172)
+            new Vector2(-395, 51),
+            new Vector2(2, 74),
+            new Vector2(400, 56)
         },
 
         new Vector2[]
         {
-            new Vector2(222, 167),
-            new Vector2(-214, 167),
-            new Vector2(-241, -112),
-            new Vector2(250, -112)
+            new Vector2(-400, 53),
+            new Vector2(-181, 148),
+            new Vector2(180, 49),
+            new Vector2(399, 143)
         },
 
         new Vector2[]
         {
-            new Vector2(-270, -117),
-            new Vector2(273, -117),
-            new Vector2(311, 115),
-            new Vector2(0, 200),
-            new Vector2(-303, 126)
+            new Vector2(197, 154),
+            new Vector2(-195, 149),
+            new Vector2(403, 50),
+            new Vector2(-398, 42),
+            new Vector2(-8, 45)
         }
     };
 
@@ -62,26 +65,59 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        ShuffleLevels(levels);
-        CreateTraficLight();
-        LoadLevel();
+        score.text = $"";
+        
     }
 
     void Update()
     {
-        timer_1 += Time.deltaTime;
-        if (timer_1 > 1)
+        if (firstClick == -1 || firstClick == -2)
         {
-            counter = counter - 1;
-            timer_1 = 0f;
+            if (Input.GetMouseButton(0))
+            {
+                firstScreen.SetActive(false);
+                firstText.text = $"";
+                firstText2.text = $"";
+                ShuffleLevels(levels);
+                currentLevel = 0;
+                if (firstClick == -1)
+                {
+                    CreateTraficLight();
+                }
+                LoadLevel();
+                foreach (GameObject button in svetoforishe)
+                {
+                    button.SetActive(true);
+                }
+                points = 0;
+                counter = 15;
+                score.text = $"{points}";
+                firstClick = 0;
+            }
         }
-        //time.text = $"Время: {counter}";
-        if (counter % 3 == 0 && counter != 15){
-            svetoforishe[counter / 3].SetActive(false);
-        }
-        if (counter == 0)
+        else
         {
-            UnityEditor.EditorApplication.isPlaying = false;
+            timer_1 += Time.deltaTime;
+            if (timer_1 > 1)
+            {
+                counter = counter - 1;
+                timer_1 = 0f;
+            }
+            //time.text = $"Время: {counter}";
+            if (counter % 3 == 0 && counter != 15){
+                svetoforishe[counter / 3].SetActive(false);
+            }
+            if (counter == 0)
+            {
+                ClearButtons();
+                score.text = $"";
+                traficLight.SetActive(false);
+                firstScreen.SetActive(true);
+                firstText.text = $"Ваш счёт: {points}";
+                firstText2.text = $"Нажмите любую кнопку";
+                firstClick = -2;
+                return;
+            }
         }
     }
 
@@ -140,7 +176,11 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Правильно!");
 
-            points = points + 1;
+            points = points + 15;
+            if (points > 100)
+            {
+                points = 100;
+            }
 
             score.text = $"{points}";
 
@@ -149,7 +189,13 @@ public class GameManager : MonoBehaviour
             if (currentLevel >= levels.Count)
             {
                 Debug.Log("Игра пройдена!");
-                UnityEditor.EditorApplication.isPlaying = false;
+                ClearButtons();
+                score.text = $"";
+                traficLight.SetActive(false);
+                firstScreen.SetActive(true);
+                firstText.text = $"Ваш счёт: {points}";
+                firstText2.text = $"Нажмите любую кнопку";
+                firstClick = -2;
                 return;
             }
 
@@ -159,7 +205,7 @@ public class GameManager : MonoBehaviour
         {
             if (points > 0)
             {
-                points = points - 1;
+                points = points - 8;
             }
 
             score.text = $"{points}";

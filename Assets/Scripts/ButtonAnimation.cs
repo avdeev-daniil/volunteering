@@ -1,0 +1,36 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    public float scaleMultiplier = 1.1f;
+    public float speed = 8f;
+
+    private Vector3 originalScale;
+    private Vector3 targetScale;
+
+    private void Start()
+    {
+        originalScale = transform.localScale;
+        targetScale = originalScale;
+    }
+
+    private void Update()
+    {
+        transform.localScale = Vector3.Lerp(
+            transform.localScale,
+            targetScale,
+            Time.deltaTime * speed
+        );
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        targetScale = originalScale * scaleMultiplier;
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        targetScale = originalScale;
+    }
+}
