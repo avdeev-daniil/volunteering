@@ -9,6 +9,8 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Vector3 originalScale;
     private Vector3 targetScale;
 
+    public PlaySound sounds;
+
     private void Start()
     {
         originalScale = transform.localScale;
@@ -27,10 +29,12 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
     public void OnPointerEnter(PointerEventData eventData)
     {
         targetScale = originalScale * scaleMultiplier;
+        sounds.PlaySFX();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         targetScale = originalScale;
     }
+    
 }

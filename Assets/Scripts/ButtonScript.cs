@@ -20,10 +20,12 @@ public class NumberButton : MonoBehaviour
         button = GetComponent<Button>();
 
         button.onClick.AddListener(OnClick);
+
+        // var a = Camera.main;
     }
 
     void OnClick()
     {
-        gameManager.ReceiveNumber(number);
+        StartCoroutine(gameManager.ReceiveNumber(number, GetComponent<RectTransform>().position.x, GetComponent<RectTransform>().position.y));
     }
 }

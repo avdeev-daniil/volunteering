@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -15,7 +16,12 @@ public class GameManager : MonoBehaviour
     public GameObject firstScreen;
     public TMP_Text firstText;
     public TMP_Text firstText2;
-
+    private float timer2 = 0f;
+    public PlaySound1 sounds1;
+    public PlaySound2 sounds2;
+    public PlaySound3 sounds3;
+    private int gamestop = 0;
+    public MoveToTarget chel;
     private List<GameObject> spawnedButtons =
         new List<GameObject>();
 
@@ -45,10 +51,10 @@ public class GameManager : MonoBehaviour
 
         new Vector2[]
         {
-            new Vector2(-400, 53),
             new Vector2(-181, 148),
-            new Vector2(180, 49),
-            new Vector2(399, 143)
+            new Vector2(-400, 53),
+            new Vector2(399, 143),
+            new Vector2(180, 49)
         },
 
         new Vector2[]
@@ -73,10 +79,18 @@ public class GameManager : MonoBehaviour
     {
         if (firstClick == -1 || firstClick == -2)
         {
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0) && timer2 > 0.5f)
             {
                 firstScreen.SetActive(false);
                 firstText.text = $"";
+                if (firstClick == -1)
+                {
+                    RectTransform rect = firstText.GetComponent<RectTransform>();
+
+                    Vector3 pos = rect.position;
+                    pos.y -= 100f;
+                    rect.position = pos;
+                }
                 firstText2.text = $"";
                 ShuffleLevels(levels);
                 currentLevel = 0;
@@ -84,6 +98,7 @@ public class GameManager : MonoBehaviour
                 {
                     CreateTraficLight();
                 }
+                firstClick = 0;
                 LoadLevel();
                 foreach (GameObject button in svetoforishe)
                 {
@@ -92,8 +107,9 @@ public class GameManager : MonoBehaviour
                 points = 0;
                 counter = 15;
                 score.text = $"{points}";
-                firstClick = 0;
+                timer2 = 0f;
             }
+            timer2 = timer2 + Time.deltaTime;
         }
         else
         {
@@ -106,6 +122,7 @@ public class GameManager : MonoBehaviour
             //time.text = $"Время: {counter}";
             if (counter % 3 == 0 && counter != 15){
                 svetoforishe[counter / 3].SetActive(false);
+                sounds3.Play();
             }
             if (counter == 0)
             {
@@ -113,9 +130,11 @@ public class GameManager : MonoBehaviour
                 score.text = $"";
                 traficLight.SetActive(false);
                 firstScreen.SetActive(true);
-                firstText.text = $"Ваш счёт: {points}";
+                firstText.text = $"Ваш счёт: {points} из 100";
                 firstText2.text = $"Нажмите любую кнопку";
                 firstClick = -2;
+                GameObject currentBH = GameObject.FindWithTag("Background");
+                Destroy(currentBH);
                 return;
             }
         }
@@ -123,93 +142,107 @@ public class GameManager : MonoBehaviour
 
     void LoadLevel()
     {
-        ClearButtons();
-
-        List<string> numbers = levels[currentLevel].answers;
-
-
-        Vector2[] positions =
-            levelPositions[numbers.Count - 2];
-
-        maxNumber = numbers[levels[currentLevel].rightIndex];
-
-        // Перемешиваем числа
-        List<string> shuffledNumbers =
-            new List<string>(numbers);
-
-        Shuffle(shuffledNumbers);
-        Vector3 newpos = new Vector3(0, 0, 0);
-        GameObject currentBH = GameObject.FindWithTag("Background");
-        if (firstClick != 0)
+        if (gamestop == 0)
         {
-            Destroy(currentBH);
+            ClearButtons();
+
+            List<string> numbers = levels[currentLevel].answers;
+
+
+            Vector2[] positions =
+                levelPositions[numbers.Count - 2];
+
+            maxNumber = numbers[levels[currentLevel].rightIndex];
+
+            // Перемешиваем числа
+            List<string> shuffledNumbers =
+                new List<string>(numbers);
+
+            Shuffle(shuffledNumbers);
+            Vector3 newpos = new Vector3(0, 0, 0);
+            GameObject currentBH = GameObject.FindWithTag("Background");
+            if (firstClick != 0)
+            {
+                Destroy(currentBH);
+            }
+            else{
+                firstClick = 1;
+            }
+            Instantiate(backgrounds[numbers.Count - 2], newpos, Quaternion.identity);
+
+            for (int i = 0; i < shuffledNumbers.Count; i++)
+            {
+                GameObject buttonObj =
+                    Instantiate(buttonPrefab, buttonParent);
+
+                RectTransform rect =
+                    buttonObj.GetComponent<RectTransform>();
+
+                rect.anchoredPosition = positions[i];
+
+                NumberButton button =
+                    buttonObj.GetComponent<NumberButton>();
+
+                button.Init(shuffledNumbers[i], this);
+
+                spawnedButtons.Add(buttonObj);
+            }
+
+            Debug.Log("Уровень " + (currentLevel + 1));
         }
-        else{
-            firstClick = 1;
-        }
-        Instantiate(backgrounds[numbers.Count - 2], newpos, Quaternion.identity);
-
-        for (int i = 0; i < shuffledNumbers.Count; i++)
-        {
-            GameObject buttonObj =
-                Instantiate(buttonPrefab, buttonParent);
-
-            RectTransform rect =
-                buttonObj.GetComponent<RectTransform>();
-
-            rect.anchoredPosition = positions[i];
-
-            NumberButton button =
-                buttonObj.GetComponent<NumberButton>();
-
-            button.Init(shuffledNumbers[i], this);
-
-            spawnedButtons.Add(buttonObj);
-        }
-
-        Debug.Log("Уровень " + (currentLevel + 1));
     }
 
-    public void ReceiveNumber(string number)
+    public IEnumerator ReceiveNumber(string number, float x, float y)
     {
-        if (number == maxNumber)
+        if (gamestop == 0)
         {
-            Debug.Log("Правильно!");
-
-            points = points + 15;
-            if (points > 100)
+            if (number == maxNumber)
             {
-                points = 100;
+                Debug.Log("Правильно!");
+
+                points = points + 11;
+                if (points > 100)
+                {
+                    points = 100;
+                }
+                gamestop = 1;
+                chel.MoveTo(new Vector2(x, y));
+
+                yield return new WaitForSeconds(0.3f);
+                gamestop = 0;
+                score.text = $"{points}";
+                sounds1.PlaySF();
+
+                currentLevel++;
+
+                if (currentLevel >= levels.Count)
+                {
+                    Debug.Log("Игра пройдена!");
+                    ClearButtons();
+                    score.text = $"";
+                    traficLight.SetActive(false);
+                    firstScreen.SetActive(true);
+                    firstText.text = $"Ваш счёт: {points} из 100";
+                    firstText2.text = $"Нажмите любую кнопку";  
+                    firstClick = -2;
+                    GameObject currentBH = GameObject.FindWithTag("Background");
+                    Destroy(currentBH);
+                    yield break;
+                }
+
+                LoadLevel();
             }
-
-            score.text = $"{points}";
-
-            currentLevel++;
-
-            if (currentLevel >= levels.Count)
+            else
             {
-                Debug.Log("Игра пройдена!");
-                ClearButtons();
-                score.text = $"";
-                traficLight.SetActive(false);
-                firstScreen.SetActive(true);
-                firstText.text = $"Ваш счёт: {points}";
-                firstText2.text = $"Нажмите любую кнопку";
-                firstClick = -2;
-                return;
-            }
+                if (points > 8)
+                {
+                    points = points - 8;
+                }
 
-            LoadLevel();
-        }
-        else
-        {
-            if (points > 0)
-            {
-                points = points - 8;
+                score.text = $"{points}";
+                Debug.Log("Неправильно!");
+                sounds2.PlayS();
             }
-
-            score.text = $"{points}";
-            Debug.Log("Неправильно!");
         }
     }
 
@@ -252,7 +285,7 @@ public class GameManager : MonoBehaviour
     void CreateTraficLight()
     {
         for (int i = 0; i < 5; i++){
-            Vector3 newpos = new Vector3(5.6f + i * 0.9f , -4.5f, 0);
+            Vector3 newpos = new Vector3(4.7f + i * 0.9f , -4.5f, 0);
             GameObject jeden = Instantiate(traficLight, newpos, Quaternion.identity);
             svetoforishe.Add(jeden);
         }
