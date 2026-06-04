@@ -113,7 +113,7 @@ public class GameManager1 : MonoBehaviour
                 firstScreen.SetActive(true);
                 you.SetActive(true);
                 firstText.text = $"Твой счёт:";
-                firstText2.text = $"{points} из 100";  
+                firstText2.text = $"{points}";  
                 firstClick = -2;
                 GameObject currentBH = GameObject.FindWithTag("Background");
                 Destroy(currentBH);
@@ -188,10 +188,6 @@ public class GameManager1 : MonoBehaviour
                 Debug.Log("Правильно!");
 
                 points = points + 10;
-                if (points > 100)
-                {
-                    points = 100;
-                }
                 gamestop = 1;
                 chel.MoveTo(new Vector2(x, y));
 
@@ -215,7 +211,7 @@ public class GameManager1 : MonoBehaviour
                     firstScreen.SetActive(true);
                     you.SetActive(true);
                     firstText.text = $"Твой счёт:";
-                    firstText2.text = $"{points} из 100";  
+                    firstText2.text = $"{points}";  
                     firstClick = -2;
                     GameObject currentBH = GameObject.FindWithTag("Background");
                     Destroy(currentBH);
